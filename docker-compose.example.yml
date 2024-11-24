@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+    #web-server container
+    nginx:
+        image: nginx:stable-alpine
+        container_name: nginx
+        depends_on:
+            - php
+            - mysql
+        ports:
+            - ${NGINX_PORT}
+        volumes:
+            - ${NGINX_CONF_PATH}:/etc/nginx/conf.d/nginx.conf
+            - ${PROJECT_PATH}:/var/www/html
+
+    #backend container
+    php:
+        build:
+            context: ./backend/php #directory to search for
+            dockerfile: PHP.Dockerfile
+        container_name: php
+        volumes:
+            - ${PROJECT_PATH}:/var/www/html
+        ports:
+            - ${BACKEND_PORT}
+            - ${BACKEND_SECURE_PORT}
+
+    #database container        
+    mysql:
+        image: mysql:8.4.2
+        container_name: mysql
+        tty: true # enable shell like interface
+        restart: unless-stopped # tell docker to restart container if it is stopped
+        volumes:
+            - mysqldata:/var/lib/mysql
+        environment:
+            - MYSQL_USER:${MYSQL_USER}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - SERVICE_TAGS=dev
+            - SERVICE_NAME=mysql
+        ports:
+            - ${MYSQL_PORT}
+
+volumes:
+    mysqldata: {}
+
+
+network:
+    - laravel
