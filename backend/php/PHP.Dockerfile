@@ -35,7 +35,8 @@ RUN addgroup -S lara-dock \
     && adduser -S lara-dock -G lara-dock
 
 # Set ownership and permissions for Laravel
-RUN chown -R lara-dock:lara-dock /var/www/html
+RUN chown -R lara-dock:lara-dock /var/www/html \
+    && chmod -R 775 /var/www/html/
 
 # Switch to non-root user for runtime
 USER lara-dock
