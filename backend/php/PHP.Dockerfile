@@ -1,26 +1,41 @@
+# Base PHP image
 FROM php:8.1.31-fpm-alpine3.20 as php
 
-# Update package manager and install system libraries
-RUN apk update && apk add --no-cache \
+# Set working directory
+WORKDIR /var/www/html
+
+# Install system libraries and PHP extensions
+RUN apk add --no-cache \
+    bash \
     curl \
+    libcurl \
+    curl-dev \
     git \
-    zip \
-    unzip \
+    icu-dev \
+    libzip-dev \
     libpng-dev \
     libjpeg-turbo-dev \
     libxpm-dev \
     libxml2-dev \
     oniguruma-dev \
-    bash
+    && docker-php-ext-configure gd --with-jpeg --with-xpm \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        intl \
+        zip \
+        gd \
+        curl \
+    && rm -rf /var/cache/apk/*
 
-# Install PHP extensions using the docker-php-ext-* scripts
-RUN docker-php-ext-install pdo pdo_mysql
-
-# Install Composer (from the Composer image)
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Clean caches
-RUN rm -rf /var/cache/apk/*
+RUN addgroup -S lara-dock \
+    && adduser -S lara-dock -G lara-dock
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html
+# Set ownership and permissions for Laravel
+RUN chown -R lara-dock:lara-dock /var/www/html
+
+# Switch to non-root user for runtime
+USER lara-dock
